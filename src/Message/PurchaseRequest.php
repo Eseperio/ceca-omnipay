@@ -14,75 +14,139 @@ use Omnipay\Ceca\Encryptor\Encryptor;
 class PurchaseRequest extends AbstractRequest
 {
 
-    protected $liveEndpoint = 'https://pgw.ceca.es/cgi-bin/tpv';
-    protected $testEndpoint = 'http://tpv.ceca.es:8000/cgi-bin/tpv';
+    /**
+     * @var string
+     */
+    protected $liveEndpoint = 'https://tpv.ceca.es/tpvweb/tpv/compra.action';
+    /**
+     * @var string
+     */
+//    protected $testEndpoint = 'http://tpv.ceca.es:8000/cgi-bin/tpv';
+    protected $testEndpoint = 'https://pgw.ceca.es/tpvweb/tpv/compra.action';
 
 
-
-
-    //Set merchanID - required
+    /**
+     * @param $MerchantID
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setMerchantID($MerchantID)
     {
         return $this->setParameter('MerchantID', $MerchantID);
     }
-    //Set AcquirerBIN - required
+
+    /**
+     * @param $AcquirerBIN
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setAcquirerBIN($AcquirerBIN)
     {
         return $this->setParameter('AcquirerBIN', $AcquirerBIN);
     }   
-    //Set AcquirerBIN - required
+
+    /**
+     * @param $TerminalID
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setTerminalID($TerminalID)
     {
         return $this->setParameter('TerminalID', $TerminalID);
     }       
-    //Set TipoMoneda - required
+
+    /**
+     * @param $TipoMoneda
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setTipoMoneda($TipoMoneda)
     {
         return $this->setParameter('TipoMoneda', $TipoMoneda);
     }
-    //Set Exponente - required
+
+    /**
+     * @param $Exponente
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setExponente($Exponente)
     {
         return $this->setParameter('Exponente', $Exponente);
-    }    
+    }
+
+    /**
+     * @param $Idioma
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setIdioma($Idioma)
     {
         return $this->setParameter('Idioma', $Idioma);
     }
+
+    /**
+     * @param $Cifrado
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setCifrado($Cifrado)
     {
         return $this->setParameter('Cifrado', $Cifrado);
     }
-    public function setClaveEncriptacion($clave_encriptacion)
+
+    /**
+     * @param $clave_encriptacion
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
+    public function setEncryptionKey($clave_encriptacion)
     {
         return $this->setParameter('clave_encriptacion', $clave_encriptacion);
     }
+
+    /**
+     * @param $url
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setURL_OK($url)
     {
         return $this->setParameter('URL_OK', $url);
     }
+
+    /**
+     * @param $url
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setURL_NOK($url)
     {
         return $this->setParameter('URL_NOK', $url);
     }
+
+    /**
+     * @param $Num_operacion
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setNumOperacion($Num_operacion)
     {
         return $this->setParameter('Num_operacion', $Num_operacion);
     }
+
+    /**
+     * @param $Pago_soportado
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setPagoSoportado($Pago_soportado)
     {
         return $this->setParameter('Pago_soportado', $Pago_soportado);
     }
+
+    /**
+     * @param $Descripcion
+     * @return \Omnipay\Ceca\Message\PurchaseRequest
+     */
     public function setDescripcion($Descripcion)
     {
         return $this->setParameter('Descripcion', $Descripcion);
     }
 
 
-
-
-
-
+    /**
+     * @return array
+     * @throws \Omnipay\Common\Exception\InvalidRequestException
+     */
     public function getData()
     {
         $data = array();
@@ -109,21 +173,36 @@ class PurchaseRequest extends AbstractRequest
 
     }
 
+    /**
+     * @param $data
+     * @return \Omnipay\Ceca\Message\PurchaseResponse
+     */
     public function sendData($data)
     {
         return $this->response = new PurchaseResponse($this, $data);
     }
 
+    /**
+     * @return string
+     */
     public function getEndpoint()
     {
         return $this->getEndpointBase();
     }
 
+    /**
+     * @return string
+     */
     public function getEndpointBase()
     {
         return $this->getTestMode() ? $this->testEndpoint : $this->liveEndpoint;
     }
 
+    /**
+     * @param $parameters
+     * @param $clave_encriptacion
+     * @return string
+     */
     protected function generateSignature($parameters, $clave_encriptacion)
     {
         $signature = 
@@ -138,7 +217,7 @@ class PurchaseRequest extends AbstractRequest
             . $parameters['Cifrado'] 
             . $parameters['URL_OK'] 
             . $parameters['URL_NOK'];
-        $signature = strtolower(sha1($signature));
-        return $signature;           
+
+        return hash('sha256', $signature);
     }
 }

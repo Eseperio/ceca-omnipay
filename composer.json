@@ -1,25 +1,12 @@
 {
-    "name": "jdominguezpaz/ceca-omnipay",
-    "type": "symfony-bundle",
+    "name": "eseperio/ceca-omnipay",
     "description": "CECA payment gateway implementation with omnipay",
-    "license": "GPLv2",
-    "authors": [
-        {
-            "name": "Jaime Dominguez",
-            "email": "jdominguezpaz@gmail.com",
-            "homepage": "http://github.com/jdominguezpaz"
-        }
-    ],
+    "license": "MIT",
     "minimum-stability": "dev",
     "require": {
-        "omnipay/common": "2.*"
+        "omnipay/common": "3.*"
     },
     "autoload": {
         "psr-4": { "Omnipay\\Ceca\\": "src/" }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "0.2.x-dev"
-        }
     }
 }
