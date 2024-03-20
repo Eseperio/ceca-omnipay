@@ -172,6 +172,16 @@ class Gateway extends AbstractGateway
     }
 
     /**
+     * @param array $options
+     * @return \Omnipay\Common\Message\NotificationInterface
+     */
+    public function acceptNotification(array $options = array()): \Omnipay\Common\Message\NotificationInterface
+    {
+//        TODO: check if its work
+        return new \Omnipay\Ceca\Message\AcceptNotification();
+    }
+
+    /**
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return array
      */
