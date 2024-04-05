@@ -153,12 +153,26 @@ class Gateway extends AbstractGateway
         $signature = SignatureHelper::sign($data, $key);
         $data['Firma'] = $signature;
         // create the form
-        echo '<form method="POST" action="' . $notificationUrl . '" onload="submit();">';
+        $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Redirecting...</title>
+</head>
+<body onload="document.forms[0].submit();" >
+    <form method="POST" action="' . $notificationUrl . '">';
+
         foreach ($data as $key => $value) {
-            echo '<input type="hidden" name="' . $key . '" value="' . $value . '">';
+            $html .= '<input type="hidden" name="' . $key . '" value="' . $value . '">';
         }
-//        echo '<input type="submit" value="Submit">';
-        echo '</form>';
+
+        $html .= '<input type="submit" value="Submit">
+    </form>
+</body>
+</html>';
+
+        ob_end_clean();
+        echo $html;
 
     }
 

@@ -82,7 +82,7 @@ class AcceptNotification implements NotificationInterface
         $data = $this->getData();
         $expectedSignature = $data['Firma'];
         $signatureData = [$this->encryptionKey];
-        $data = [
+        $neededParams = [
             'MerchantID',
             'AcquirerBIN',
             'TerminalID',
@@ -93,7 +93,7 @@ class AcceptNotification implements NotificationInterface
             'Referencia'
         ];
 
-        foreach ($data as $param) {
+        foreach ($neededParams as $param) {
             $signatureData[] = $data[$param];
         }
         $signature = strtolower(SignatureHelper::sign($signatureData, $this->encryptionKey));
