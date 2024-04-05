@@ -7,6 +7,7 @@ use Omnipay\Common\Message\RedirectResponseInterface;
 
 /**
  * Ceca (Redsys) Purchase Response
+ * @method \Omnipay\Ceca\Message\PurchaseRequest getRequest()
  */
 class PurchaseResponse extends AbstractResponse implements RedirectResponseInterface
 {

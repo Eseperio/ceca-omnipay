@@ -8,6 +8,7 @@ use Omnipay\Ceca\Exception\BadSignatureException;
 use Omnipay\Ceca\Exception\CallbackException;
 
 /**
+ * @deprecated
  * Ceca (Redsys)  Callback Response
  */
 class CallbackResponse

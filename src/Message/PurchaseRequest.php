@@ -2,8 +2,12 @@
 
 namespace Omnipay\Ceca\Message;
 
-use Omnipay\Common\Message\AbstractRequest;
+use Money\Currencies\ISOCurrencies;
+use Money\Currency;
 use Omnipay\Ceca\Encryptor\Encryptor;
+use Omnipay\Ceca\Helpers\SignatureHelper;
+use Omnipay\Ceca\Helpers\UtilsHelper;
+use Omnipay\Common\Message\AbstractRequest;
 
 /**
  * Ceca (Redsys) Purchase Request
@@ -17,12 +21,11 @@ class PurchaseRequest extends AbstractRequest
     /**
      * @var string
      */
-    protected $liveEndpoint = 'https://tpv.ceca.es/tpvweb/tpv/compra.action';
+    protected $liveEndpoint = 'https://pgw.ceca.es/tpvweb/tpv/compra.action';
     /**
      * @var string
      */
-//    protected $testEndpoint = 'http://tpv.ceca.es:8000/cgi-bin/tpv';
-    protected $testEndpoint = 'https://pgw.ceca.es/tpvweb/tpv/compra.action';
+    protected $testEndpoint = 'https://tpv.ceca.es/tpvweb/tpv/compra.action';
 
 
     /**
@@ -41,7 +44,7 @@ class PurchaseRequest extends AbstractRequest
     public function setAcquirerBIN($AcquirerBIN)
     {
         return $this->setParameter('AcquirerBIN', $AcquirerBIN);
-    }   
+    }
 
     /**
      * @param $TerminalID
@@ -50,15 +53,11 @@ class PurchaseRequest extends AbstractRequest
     public function setTerminalID($TerminalID)
     {
         return $this->setParameter('TerminalID', $TerminalID);
-    }       
+    }
 
-    /**
-     * @param $TipoMoneda
-     * @return \Omnipay\Ceca\Message\PurchaseRequest
-     */
-    public function setTipoMoneda($TipoMoneda)
+    public function setEncryptionKey($key)
     {
-        return $this->setParameter('TipoMoneda', $TipoMoneda);
+        return $this->setParameter('clave_encriptacion', $key);
     }
 
     /**
@@ -88,14 +87,6 @@ class PurchaseRequest extends AbstractRequest
         return $this->setParameter('Cifrado', $Cifrado);
     }
 
-    /**
-     * @param $clave_encriptacion
-     * @return \Omnipay\Ceca\Message\PurchaseRequest
-     */
-    public function setEncryptionKey($clave_encriptacion)
-    {
-        return $this->setParameter('clave_encriptacion', $clave_encriptacion);
-    }
 
     /**
      * @param $url
@@ -116,32 +107,38 @@ class PurchaseRequest extends AbstractRequest
     }
 
     /**
-     * @param $Num_operacion
+     * @param $transactionId
      * @return \Omnipay\Ceca\Message\PurchaseRequest
      */
-    public function setNumOperacion($Num_operacion)
+    public function setTransactionId($value)
     {
-        return $this->setParameter('Num_operacion', $Num_operacion);
+
+        if(strstr($value,'-')){
+            // Since CECA does not allow retry in less than 24 houres, we use a combination of
+            // transaction ID and a random number to avoid conflicts, and we use "-" as separator.
+            throw new \Exception("Transaction ID must not contain the character '-'");
+        }
+
+        $maxLen = 50;
+        $suffixLen = 13;
+        $validLen = $maxLen - $suffixLen;
+        $transactionId = UtilsHelper::getTransactionId($value);
+        if (strlen($transactionId) > $maxLen) {
+            throw new \InvalidArgumentException("Transaction ID must be less than $validLen characters long");
+        }
+
+        return $this->setParameter('Num_operacion', $transactionId);
     }
 
-    /**
-     * @param $Pago_soportado
-     * @return \Omnipay\Ceca\Message\PurchaseRequest
-     */
-    public function setPagoSoportado($Pago_soportado)
-    {
-        return $this->setParameter('Pago_soportado', $Pago_soportado);
-    }
 
     /**
      * @param $Descripcion
      * @return \Omnipay\Ceca\Message\PurchaseRequest
      */
-    public function setDescripcion($Descripcion)
+    public function setDescription($Descripcion)
     {
         return $this->setParameter('Descripcion', $Descripcion);
     }
-
 
     /**
      * @return array
@@ -150,23 +147,33 @@ class PurchaseRequest extends AbstractRequest
     public function getData()
     {
         $data = array();
+
         $clave_encriptacion = $this->getParameter('clave_encriptacion');
+        $dataParams = [
+            'MerchantID',
+            'AcquirerBIN',
+            'TerminalID',
+            'Num_operacion',
+            'Exponente',
+            'URL_OK',
+            'URL_NOK',
+            'Cifrado',
+            'Idioma',
+            'Descripcion'
+        ];
 
-        $data['MerchantID'] = $this->getParameter('MerchantID');
-        $data['AcquirerBIN'] = $this->getParameter('AcquirerBIN');
-        $data['TerminalID'] = $this->getParameter('TerminalID');
+        foreach ($dataParams as $param) {
+            $data[$param] = $this->getParameter($param);
+        }
 
-        $data['Num_operacion'] = $this->getParameter('Num_operacion');
+        $currency = new Currency($this->getCurrency());
+
+        $currencies = new ISOCurrencies();
+        $data['TipoMoneda'] = $currencies->numericCodeFor($currency);
+
         $data['Importe'] = (float)$this->getAmount();
-        $data['TipoMoneda'] = $this->getParameter('TipoMoneda');
-        $data['Exponente'] = $this->getParameter('Exponente');
-        
-        $data['URL_OK'] = $this->getParameter('URL_OK');
-        $data['URL_NOK'] = $this->getParameter('URL_NOK');
-        $data['Cifrado'] = $this->getParameter('Cifrado');
-        $data['Idioma'] = $this->getParameter('Idioma');
-        $data['Pago_soportado'] = $this->getParameter('Pago_soportado');
-        $data['Descripcion'] = $this->getParameter('Descripcion');
+        // this param is frozen to SSL since it is the only supported payment method
+        $data['Pago_soportado'] = 'SSL';
 
         $data['Firma'] = $this->generateSignature($data, $clave_encriptacion);
         return $data;
@@ -205,19 +212,20 @@ class PurchaseRequest extends AbstractRequest
      */
     protected function generateSignature($parameters, $clave_encriptacion)
     {
-        $signature = 
-            $clave_encriptacion 
-            . $parameters['MerchantID'] 
-            . $parameters['AcquirerBIN'] 
-            . $parameters['TerminalID'] 
-            . $parameters['Num_operacion'] 
-            . $parameters['Importe'] 
-            . $parameters['TipoMoneda'] 
-            . $parameters['Exponente'] 
-            . $parameters['Cifrado'] 
-            . $parameters['URL_OK'] 
-            . $parameters['URL_NOK'];
+        $signParams = [
+            $clave_encriptacion,
+            $parameters['MerchantID'],
+            $parameters['AcquirerBIN'],
+            $parameters['TerminalID'],
+            $parameters['Num_operacion'],
+            $parameters['Importe'],
+            $parameters['TipoMoneda'],
+            $parameters['Exponente'],
+            $parameters['Cifrado'],
+            $parameters['URL_OK'],
+            $parameters['URL_NOK']
+        ];
+        return SignatureHelper::sign($signParams, $clave_encriptacion);
 
-        return hash('sha256', $signature);
     }
 }
