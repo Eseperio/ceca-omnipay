@@ -80,6 +80,11 @@ class AcceptNotification implements NotificationInterface
     private function checkSignature()
     {
         $data = $this->getData();
+
+        if(!isset($data['Firma'])) {
+            return false;
+        }
+
         $expectedSignature = $data['Firma'];
         $signatureData = [$this->encryptionKey];
         $neededParams = [
